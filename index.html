@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Solid2FA — Consent &amp; Messaging Flow</title>
+<meta name="description" content="How users opt in to Solid2FA, how their number is verified, how messages are handled, and how they opt out. Prepared for compliance review." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5F6F8;
+    --surface:#FFFFFF;
+    --ink:#16181D;
+    --ink-2:#5A6270;
+    --hair:#E4E7EC;
+    --blue:#234E78;
+    --blue-tint:#E9F0F7;
+    --green:#2F7A57;
+    --green-tint:#E6F2EC;
+    --amber:#B5781F;
+    --amber-tint:#FBF1DD;
+    --violet:#5B3E8E;
+    --violet-tint:#EFE9F8;
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --maxw:920px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .topbar{height:4px;background:linear-gradient(90deg,var(--blue) 0%,var(--green) 60%,var(--violet) 100%);}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+
+  /* Header */
+  header.intro{padding:56px 0 8px;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--blue);
+    font-weight:600;
+    margin:0 0 18px;
+  }
+  .doc-label{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.05em;
+    color:var(--ink-2);
+    margin:0 0 24px;
+  }
+  h1{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:clamp(28px,4.6vw,44px);
+    line-height:1.1;
+    letter-spacing:-0.01em;
+    margin:0 0 18px;
+    max-width:18ch;
+  }
+  .lede{
+    font-size:clamp(16px,1.7vw,18px);
+    color:#2C313A;
+    max-width:62ch;
+    margin:0 0 28px;
+  }
+  .meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 22px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-2);
+    padding:18px 0 0;
+    border-top:1px solid var(--hair);
+  }
+  .meta b{color:var(--ink);font-weight:600;}
+
+  /* Hero topology */
+  .topology{
+    margin:36px 0 8px;
+    background:var(--surface);
+    border:1px solid var(--hair);
+    border-radius:14px;
+    padding:26px 22px 18px;
+  }
+  .topology svg{width:100%;height:auto;display:block;}
+  .topology-cap{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-2);
+    text-align:center;
+    margin:10px 0 0;
+  }
+
+  /* Two message paths */
+  .paths{display:flex;flex-direction:column;gap:16px;}
+  .path-block{
+    background:var(--surface);
+    border:1px solid var(--hair);
+    border-radius:14px;
+    padding:22px 22px 16px;
+  }
+  .path-block .ph{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 12px;margin:0 0 6px;}
+  .path-block h3{font-family:var(--display);font-weight:600;font-size:17px;margin:0;display:flex;align-items:center;gap:9px;}
+  .path-block .sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.03em;color:var(--ink-2);}
+  .path-block .desc{margin:0 0 14px;font-size:14.5px;color:#3A4049;max-width:64ch;}
+  .path-block svg{width:100%;height:auto;display:block;}
+  .section-lead{margin:0 0 18px;font-size:15px;color:#3A4049;max-width:66ch;}
+  .section-lead a,.desc a{color:var(--blue);text-decoration:none;border-bottom:1px solid #BBD0E3;}
+  .section-lead a:hover,.desc a:hover{border-bottom-color:var(--blue);}
+  .path-block.future{border-style:dashed;border-color:#C9B8E6;background:#FCFBFE;}
+  .pill-future{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:3px 9px;
+    border-radius:999px;
+    background:var(--violet-tint);
+    color:#4A327A;
+    border:1px solid #C9B8E6;
+  }
+
+  /* Assurances */
+  section{padding:44px 0;}
+  .section-head{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-2);
+    margin:0 0 22px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .section-head::after{content:"";flex:1;height:1px;background:var(--hair);}
+  .assure{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--hair);
+    border-radius:12px;
+    padding:20px 20px 18px;
+  }
+  .card .k{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:16px;
+    margin:0 0 6px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+  .dot.b{background:var(--blue);}
+  .dot.g{background:var(--green);}
+  .dot.v{background:var(--violet);}
+  .dot.a{background:var(--amber);}
+  .card p{margin:0;font-size:14.5px;color:#3A4049;}
+
+  /* Legend */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 16px;
+    background:var(--surface);
+    border:1px solid var(--hair);
+    border-radius:12px;
+    padding:16px 18px;
+    margin:0 0 22px;
+  }
+  .leg{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#3A4049;}
+  .swatch{width:26px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.08);flex:0 0 auto;}
+  .swatch.consent{background:var(--blue-tint);}
+  .swatch.optout{background:var(--green-tint);}
+  .swatch.note{background:var(--amber-tint);border-color:var(--amber);}
+  .swatch.branch{background:var(--violet-tint);border-color:var(--violet);}
+
+  /* Diagram */
+  .diagram-card{
+    background:var(--surface);
+    border:1px solid var(--hair);
+    border-radius:14px;
+    padding:14px 12px;
+    overflow-x:auto;
+  }
+  pre.mermaid{
+    margin:0;
+    text-align:center;
+    min-height:420px;
+    font-family:var(--body);
+  }
+  pre.mermaid:not([data-processed]){visibility:hidden;}
+  .diagram-fallback{
+    display:none;
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink-2);
+    padding:18px;
+  }
+
+  /* Walkthrough */
+  .steps{display:flex;flex-direction:column;gap:2px;}
+  .step{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:18px;
+    padding:20px 0;
+    border-top:1px solid var(--hair);
+  }
+  .step:first-child{border-top:none;}
+  .step .num{
+    font-family:var(--mono);
+    font-weight:600;
+    font-size:13px;
+    color:#fff;
+    background:var(--blue);
+    width:30px;height:30px;
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    margin-top:2px;
+  }
+  .step.optout .num{background:var(--green);}
+  .step h3{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:17px;
+    margin:0 0 6px;
+  }
+  .step p{margin:0;color:#3A4049;font-size:15px;}
+  .step .tag{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:11.5px;
+    padding:2px 8px;
+    border-radius:5px;
+    margin-top:10px;
+    background:var(--amber-tint);
+    color:#6A4E18;
+    border:1px solid #E7CF9A;
+  }
+  code{
+    font-family:var(--mono);
+    font-size:.9em;
+    background:#EEF0F3;
+    padding:1px 6px;
+    border-radius:5px;
+    color:#2A2E35;
+  }
+
+  footer{
+    padding:40px 0 64px;
+    border-top:1px solid var(--hair);
+    color:var(--ink-2);
+    font-size:14px;
+  }
+  footer .status{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--amber);
+    margin:0 0 10px;
+  }
+  footer a{color:var(--blue);text-decoration:none;border-bottom:1px solid #BBD0E3;}
+  footer a:hover{border-bottom-color:var(--blue);}
+
+  a:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:3px;}
+
+  @media (max-width:640px){
+    .assure{grid-template-columns:1fr;}
+    header.intro{padding-top:40px;}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .reveal{opacity:0;transform:translateY(8px);animation:rise .6s ease forwards;}
+    @keyframes rise{to{opacity:1;transform:none;}}
+  }
+  @media print{
+    body{background:#fff;}
+    .topology,.card,.diagram-card,.legend{break-inside:avoid;}
+    .topbar{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap">
+
+  <header class="intro reveal">
+    <p class="eyebrow">Multifactor · Solid2FA</p>
+    <h1>Opt-in and message-handling flow</h1>
+    <p class="lede">Solid2FA gives each user one dedicated number that receives the texts their accounts send. Non-sensitive notifications are forwarded to the user's real phone. One-time passcodes are shown only inside the app and are never sent over SMS. This page documents how a user consents, how their phone is verified, how messages are handled, and how they opt out.</p>
+    <div class="meta">
+      <span><b>Prepared for</b> Telnyx compliance</span>
+      <span><b>Contact</b> dave@multifactor.com</span>
+      <span><b>Status</b> early development, designed flow</span>
+    </div>
+
+    <div class="topology" aria-label="System overview: connected accounts send SMS to a per-user dedicated number; non-sensitive notifications are forwarded to the real phone, one-time codes stay in the app.">
+      <svg viewBox="0 0 760 196" role="img" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#5A6270"/>
+          </marker>
+          <marker id="arrowG" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#2F7A57"/>
+          </marker>
+        </defs>
+
+        <!-- connectors -->
+        <line x1="196" y1="86" x2="292" y2="86" stroke="#5A6270" stroke-width="1.6" marker-end="url(#arrow)"/>
+        <text x="244" y="76" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5A6270">SMS in</text>
+
+        <line x1="468" y1="86" x2="564" y2="86" stroke="#2F7A57" stroke-width="1.8" marker-end="url(#arrowG)"/>
+        <text x="516" y="76" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#2F7A57">notifications</text>
+
+        <!-- left node: accounts -->
+        <rect x="24" y="56" width="172" height="60" rx="11" fill="#FFFFFF" stroke="#E4E7EC"/>
+        <text x="110" y="82" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="14" fill="#16181D">Connected accounts</text>
+        <text x="110" y="100" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#5A6270">bank, retailer, app</text>
+
+        <!-- middle node: dedicated number / app -->
+        <rect x="292" y="46" width="176" height="80" rx="12" fill="#E9F0F7" stroke="#234E78" stroke-width="1.4"/>
+        <text x="380" y="74" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="14" fill="#16181D">Dedicated number</text>
+        <text x="380" y="91" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#234E78">one per user · Solid2FA</text>
+        <!-- lock glyph -->
+        <g transform="translate(366,100)">
+          <rect x="0" y="6" width="28" height="18" rx="3" fill="#234E78"/>
+          <path d="M5,6 V3 a9,9 0 0 1 18,0 V6" fill="none" stroke="#234E78" stroke-width="2.4"/>
+          <circle cx="14" cy="15" r="2.4" fill="#fff"/>
+        </g>
+
+        <!-- right node: phone -->
+        <rect x="564" y="56" width="172" height="60" rx="11" fill="#FFFFFF" stroke="#E4E7EC"/>
+        <text x="650" y="82" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="14" fill="#16181D">User's real phone</text>
+        <text x="650" y="100" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#5A6270">non-sensitive only</text>
+
+        <!-- OTP held tag -->
+        <g transform="translate(300,150)">
+          <rect x="0" y="0" width="160" height="28" rx="7" fill="#EFE9F8" stroke="#5B3E8E"/>
+          <circle cx="16" cy="14" r="4" fill="#5B3E8E"/>
+          <text x="28" y="18" font-family="IBM Plex Mono, monospace" font-size="11" fill="#3D2A63">OTP codes stay in app</text>
+        </g>
+      </svg>
+      <p class="topology-cap">System at a glance. Codes are held at the number and shown only in the app; only non-sensitive texts continue to the real phone.</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="assure-h">
+    <h2 class="section-head" id="assure-h">What this guarantees</h2>
+    <div class="assure">
+      <div class="card">
+        <p class="k"><span class="dot b"></span>Affirmative opt-in first</p>
+        <p>No SMS reaches the real phone until the user explicitly activates the service and sees exactly what they are agreeing to, including who is sending and how to stop.</p>
+      </div>
+      <div class="card">
+        <p class="k"><span class="dot b"></span>One number per user</p>
+        <p>Each user gets a single dedicated number reused across their accounts, the way a normal mobile number works. It is not a pool of disposable per-account numbers.</p>
+      </div>
+      <div class="card">
+        <p class="k"><span class="dot v"></span>Codes are never sent by SMS</p>
+        <p>One-time passcodes are shown only inside the app. Only non-sensitive notifications are relayed onward to the real phone.</p>
+      </div>
+      <div class="card">
+        <p class="k"><span class="dot g"></span>Always reversible</p>
+        <p>Users can unlink their number in the app at any time, and <code>STOP</code> is honored on the SMS channel.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="paths-h">
+    <h2 class="section-head" id="paths-h">Two message paths</h2>
+    <p class="section-lead">The dedicated numbers are provisioned through Telnyx, which delivers each inbound SMS into a <a href="https://aws.amazon.com/ec2/nitro/nitro-enclaves/" target="_blank" rel="noopener">secure enclave</a>, an isolated, hardware-protected environment where the message is processed so its contents are never exposed outside that boundary. Every inbound message is reviewed and classified inside the enclave before anything leaves it, and that classification decides where it goes: sensitive codes are routed to the app, and non-sensitive messages are forwarded to the phone.</p>
+    <div class="paths">
+
+      <div class="path-block">
+        <div class="ph">
+          <h3><span class="dot v"></span>One-time passcode</h3>
+          <span class="sub">sensitive · routed to the app</span>
+        </div>
+        <p class="desc">A connected account sends a 2FA or OTP code to the dedicated number. Inside the secure enclave the message is reviewed and classified as sensitive, so it is routed to the app and is never relayed to the user's real phone.</p>
+        <svg viewBox="0 0 760 240" role="img" xmlns="http://www.w3.org/2000/svg" aria-label="A connected account sends a one-time passcode. It is received on the dedicated number, reviewed and classified inside the secure enclave as sensitive, then routed to the app and blocked from the real phone.">
+          <defs>
+            <marker id="otGray" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="#5A6270"/></marker>
+            <marker id="otViolet" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="#5B3E8E"/></marker>
+          </defs>
+
+          <line x1="164" y1="126" x2="276" y2="126" stroke="#5A6270" stroke-width="1.6" marker-end="url(#otGray)"/>
+          <text x="220" y="114" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5A6270">SMS in</text>
+          <g transform="translate(172,134)">
+            <rect x="0" y="0" width="96" height="22" rx="6" fill="#FFFFFF" stroke="#E4E7EC"/>
+            <text x="48" y="15" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#2A2E35">code 847291</text>
+          </g>
+
+          <rect x="14" y="94" width="150" height="64" rx="11" fill="#FFFFFF" stroke="#E4E7EC"/>
+          <text x="89" y="120" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="13.5" fill="#16181D">Connected account</text>
+          <text x="89" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5A6270">sends a 2FA code</text>
+
+          <rect x="276" y="58" width="230" height="136" rx="14" fill="#E9F0F7" stroke="#234E78" stroke-width="1.4"/>
+          <g transform="translate(290,70)">
+            <rect x="0" y="5" width="20" height="13" rx="2.5" fill="#234E78"/>
+            <path d="M3.5,5 V3 a6.5,6.5 0 0 1 13,0 V5" fill="none" stroke="#234E78" stroke-width="2"/>
+            <circle cx="10" cy="11.5" r="1.7" fill="#fff"/>
+          </g>
+          <text x="400" y="82" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="14" fill="#16181D">Dedicated number</text>
+          <text x="400" y="99" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#234E78">secure enclave</text>
+
+          <rect x="292" y="110" width="198" height="68" rx="10" fill="#FFFFFF" stroke="#C6D2E2"/>
+          <g transform="translate(306,128)">
+            <circle cx="4" cy="4" r="5" fill="none" stroke="#5A6270" stroke-width="1.8"/>
+            <line x1="8" y1="8" x2="12" y2="12" stroke="#5A6270" stroke-width="1.8" stroke-linecap="round"/>
+          </g>
+          <text x="326" y="133" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#2A2E35">Review &amp; classify</text>
+          <g transform="translate(308,147)">
+            <rect x="0" y="0" width="82" height="22" rx="11" fill="#EFE9F8" stroke="#5B3E8E"/>
+            <text x="41" y="15" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#3D2A63">Sensitive</text>
+          </g>
+          <text x="402" y="162" font-family="IBM Plex Mono, monospace" font-size="9" fill="#5A6270">in enclave</text>
+
+          <line x1="506" y1="118" x2="600" y2="90" stroke="#5B3E8E" stroke-width="2" marker-end="url(#otViolet)"/>
+          <text x="556" y="90" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#5B3E8E">to app</text>
+
+          <line x1="506" y1="134" x2="546" y2="156" stroke="#B7BFC9" stroke-width="1.8" stroke-dasharray="4 4"/>
+          <text x="556" y="148" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#7A6AA0">not sent</text>
+          <g transform="translate(560,166)">
+            <circle r="10" fill="#EFE9F8" stroke="#5B3E8E" stroke-width="1.7"/>
+            <line x1="-5" y1="5" x2="5" y2="-5" stroke="#5B3E8E" stroke-width="1.7"/>
+          </g>
+
+          <rect x="600" y="58" width="146" height="60" rx="11" fill="#F6F2FC" stroke="#5B3E8E" stroke-width="1.3"/>
+          <text x="673" y="84" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="13" fill="#16181D">Solid2FA app</text>
+          <text x="673" y="101" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5B3E8E">code shown here</text>
+
+          <g opacity="0.4">
+            <rect x="600" y="150" width="146" height="60" rx="11" fill="#FFFFFF" stroke="#E4E7EC"/>
+            <text x="673" y="176" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="13" fill="#16181D">User's real phone</text>
+            <text x="673" y="193" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5A6270">no code arrives</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="path-block">
+        <div class="ph">
+          <h3><span class="dot g"></span>Notification</h3>
+          <span class="sub">non-sensitive · forwarded</span>
+        </div>
+        <p class="desc">A connected account sends a non-sensitive notification to the dedicated number. Inside the secure enclave the message is reviewed and classified as non-sensitive, so it is forwarded on to the user's real phone the way they normally receive it.</p>
+        <svg viewBox="0 0 760 240" role="img" xmlns="http://www.w3.org/2000/svg" aria-label="A connected account sends a non-sensitive notification. It is received on the dedicated number, reviewed and classified inside the secure enclave as non-sensitive, then forwarded to the user's real phone.">
+          <defs>
+            <marker id="nfGray" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="#5A6270"/></marker>
+            <marker id="nfGreen" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="#2F7A57"/></marker>
+          </defs>
+
+          <line x1="164" y1="126" x2="276" y2="126" stroke="#5A6270" stroke-width="1.6" marker-end="url(#nfGray)"/>
+          <text x="220" y="114" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5A6270">SMS in</text>
+          <g transform="translate(172,134)">
+            <rect x="0" y="0" width="96" height="22" rx="6" fill="#FFFFFF" stroke="#E4E7EC"/>
+            <text x="48" y="15" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#2A2E35">Order shipped</text>
+          </g>
+
+          <rect x="14" y="94" width="150" height="64" rx="11" fill="#FFFFFF" stroke="#E4E7EC"/>
+          <text x="89" y="120" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="13.5" fill="#16181D">Connected account</text>
+          <text x="89" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5A6270">sends a notification</text>
+
+          <rect x="276" y="58" width="230" height="136" rx="14" fill="#E9F0F7" stroke="#234E78" stroke-width="1.4"/>
+          <g transform="translate(290,70)">
+            <rect x="0" y="5" width="20" height="13" rx="2.5" fill="#234E78"/>
+            <path d="M3.5,5 V3 a6.5,6.5 0 0 1 13,0 V5" fill="none" stroke="#234E78" stroke-width="2"/>
+            <circle cx="10" cy="11.5" r="1.7" fill="#fff"/>
+          </g>
+          <text x="400" y="82" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="14" fill="#16181D">Dedicated number</text>
+          <text x="400" y="99" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#234E78">secure enclave</text>
+
+          <rect x="292" y="110" width="198" height="68" rx="10" fill="#FFFFFF" stroke="#C6D2E2"/>
+          <g transform="translate(306,128)">
+            <circle cx="4" cy="4" r="5" fill="none" stroke="#5A6270" stroke-width="1.8"/>
+            <line x1="8" y1="8" x2="12" y2="12" stroke="#5A6270" stroke-width="1.8" stroke-linecap="round"/>
+          </g>
+          <text x="326" y="133" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#2A2E35">Review &amp; classify</text>
+          <g transform="translate(308,147)">
+            <rect x="0" y="0" width="104" height="22" rx="11" fill="#E6F2EC" stroke="#2F7A57"/>
+            <text x="52" y="15" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#1F5238">Non-sensitive</text>
+          </g>
+
+          <line x1="506" y1="134" x2="600" y2="180" stroke="#2F7A57" stroke-width="2" marker-end="url(#nfGreen)"/>
+          <text x="556" y="150" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#2F7A57">forwarded</text>
+
+          <line x1="506" y1="118" x2="558" y2="96" stroke="#C7CDD6" stroke-width="1.8" stroke-dasharray="4 4"/>
+          <text x="556" y="86" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#9AA3B0">also in app</text>
+
+          <g opacity="0.4">
+            <rect x="600" y="58" width="146" height="60" rx="11" fill="#FFFFFF" stroke="#E4E7EC"/>
+            <text x="673" y="84" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="13" fill="#16181D">Solid2FA app</text>
+            <text x="673" y="101" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5A6270">secure in-app view</text>
+          </g>
+
+          <rect x="600" y="150" width="146" height="60" rx="11" fill="#F2FAF5" stroke="#2F7A57" stroke-width="1.3"/>
+          <text x="663" y="176" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="600" font-size="12.5" fill="#16181D">User's real phone</text>
+          <text x="663" y="193" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#1F5238">receives the alert</text>
+          <g transform="translate(736,166)">
+            <circle cx="0" cy="0" r="9" fill="#2F7A57"/>
+            <path d="M-4,0 L-1,3 L4.5,-3.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </g>
+        </svg>
+      </div>
+
+    </div>
+  </section>
+
+  <section aria-labelledby="flow-h">
+    <h2 class="section-head" id="flow-h">The flow, step by step</h2>
+
+    <div class="legend" aria-hidden="false">
+      <span class="leg"><span class="swatch consent"></span>Consent capture</span>
+      <span class="leg"><span class="swatch optout"></span>Opt-out</span>
+      <span class="leg"><span class="swatch note"></span>Key compliance point</span>
+      <span class="leg"><span class="swatch branch"></span>Sensitive vs non-sensitive handling</span>
+    </div>
+
+    <div class="diagram-card">
+      <pre class="mermaid" aria-label="Sequence diagram of the Solid2FA consent and messaging flow">
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant App as Solid2FA App
+  participant TX as Telnyx
+  participant Phone as Real Phone
+  participant Acct as Connected Account
+
+  rect rgb(233,240,247)
+  Note over U,Phone: Step 1. Activation and consent (once per user)
+  U->>App: Open app (already authenticated), tap Activate Solid2FA
+  App->>U: Show opt-in. SMS will be sent to the real number, sender is Multifactor, message types are shown, and STOP opts out
+  U->>App: Affirmative opt-in
+  Note over App,Phone: No SMS is sent to the real number until this affirmative opt-in
+  end
+
+  Note over U,Phone: Step 2. Provisioning and verification (once per user)
+  App->>TX: Provision the user's dedicated number
+  TX-->>App: Dedicated number assigned
+  App->>TX: Send a non-OTP confirmation text to the dedicated number
+  TX->>Phone: Confirmation text forwarded to the real phone
+  U->>App: Enter the confirmation text back in the app
+  App->>App: Verify, then record consent against the confirmed handset
+
+  Note over U,Acct: Step 3. Connect accounts (reuse the same number)
+  U->>App: Connect an account, for example Wells Fargo
+  App->>U: Show steps to set the dedicated number on that account
+  U->>Acct: Set the account's phone number to the dedicated number
+  Note over App,Acct: No new opt-in to Solid2FA and no new SMS from us. The connected account runs its own number-change verification
+
+  Note over U,Acct: Step 4. Ongoing messages
+  Acct->>TX: Account sends an SMS to the dedicated number
+  TX->>App: Inbound message delivered to the app
+  alt Sensitive content (OTP or 2FA code)
+    App->>U: Shown only inside the app. Never relayed by SMS
+  else Non-sensitive notification
+    App->>TX: Relay the message
+    TX->>Phone: Forwarded to the real phone
+  end
+
+  rect rgb(230,242,236)
+  Note over U,Acct: Step 5. Opt-out (any time)
+  U->>App: Unlink the number in the app, or reply STOP by SMS
+  App->>U: Prompt to confirm the number was reverted on connected accounts
+  App->>TX: Stop relaying and release the number as needed
+  Note over App,Phone: STOP is honored on the SMS channel
+  end
+      </pre>
+      <p class="diagram-fallback" id="fallback">The interactive diagram could not load in this browser. It describes the consent, verification, message-handling, and opt-out flow in sequence.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="roadmap-h">
+    <h2 class="section-head" id="roadmap-h">On the roadmap</h2>
+    <p class="section-lead">This is planned for a later release. We are including it so it can be considered in the messaging design now.</p>
+    <div class="paths">
+      <div class="path-block future">
+        <div class="ph">
+          <h3><span class="dot v"></span>Agent-assisted number change</h3>
+          <span class="pill-future">Planned</span>
+        </div>
+        <p class="desc">In a later release, an AI agent will set the dedicated number on the connected account for the user, so they do not have to do it manually. The user approves this per account, in advance, and the agent can only set the number. The agent runs outside the enclave, drives the account website with a headless browser, and uses a stored session rather than the user's credentials. The agent never holds the sensitive values itself: the secure enclave injects the new number, and any verification codes that are needed, directly into the account's form, while the agent only drives the navigation. The account first verifies on the user's existing phone, sending a confirmation code there that the user enters when the app prompts them, and the enclave injects that code. Some accounts then add a secondary step that sends a second code to the new dedicated number, which the enclave also injects. After the switch, the account's ongoing codes arrive at the dedicated number and stay in the enclave, which the agent never sees. Because every sensitive value is injected by the enclave and the agent only navigates, the agent never gains unauthorized control of the number or the user's codes.</p>
+      </div>
+    </div>
+
+    <p class="section-lead" style="margin-top:26px">The detailed flow, step by step:</p>
+    <div class="diagram-card">
+      <pre class="mermaid" aria-label="Detailed sequence diagram of the agent-assisted number change">
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant App as Solid2FA App
+  participant Agent as AI Agent
+  participant Acct as Connected Account
+  participant Enc as Secure Enclave
+
+  Note over U,Enc: Future capability. Approval is per account, given in advance, and scoped to setting the number
+
+  U->>App: Approve the agent to change the number on this account
+  Note over Agent,Acct: The agent drives the site with a headless browser and a stored session. It never holds the number or the codes
+  Agent->>Acct: Open the site and navigate to the change-number setting
+  Enc->>Acct: Inject the dedicated number into the form
+  Agent->>Acct: Submit the change
+
+  Note over Acct,U: First, the account verifies on the original phone
+  Acct-->>U: Send a confirmation code to the user's original phone
+  Agent->>App: Signal that a confirmation code is needed
+  App->>U: Prompt the user to enter the code
+  U->>App: Enter the code from their phone
+  App->>Enc: Pass the code to the enclave
+  Enc->>Acct: Inject the confirmation code into the form
+  Agent->>Acct: Submit the code
+
+  opt Some accounts then also verify the new number (a second step)
+    Acct-->>Enc: A second code is sent to the dedicated number, inside the enclave
+    Enc->>Acct: Inject that code into the form
+    Agent->>Acct: Submit the second code
+  end
+
+  Acct-->>Agent: Number change confirmed
+  Agent->>App: Report that the account is linked
+  Note over Acct,Enc: From now on the account's codes go to the dedicated number and stay in the enclave. The agent never sees them
+
+  alt The agent gets stuck, for example a CAPTCHA
+    Agent->>App: Pause and ask the user to step in
+    U->>Acct: Finish the step manually
+  end
+      </pre>
+      <p class="diagram-fallback">The interactive diagram could not load in this browser. The written description above covers the same flow.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p class="status">This describes the intended flow while the product is in early development.</p>
+    <p>Happy to share the exact opt-in copy and the <code>STOP</code> / <code>HELP</code> responses if compliance would like to review the wording. Questions to <a href="mailto:dave@multifactor.com">dave@multifactor.com</a>.</p>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+  (function(){
+    function showFallback(){
+      document.querySelectorAll('.diagram-fallback').forEach(function(el){ el.style.display='block'; });
+    }
+    if(typeof mermaid === 'undefined'){ showFallback(); return; }
+    try{
+      mermaid.initialize({
+        startOnLoad:true,
+        theme:'base',
+        securityLevel:'strict',
+        sequence:{ useMaxWidth:true, wrap:true, width:200, mirrorActors:false, boxMargin:12 },
+        themeVariables:{
+          fontFamily:'Inter, system-ui, sans-serif',
+          primaryColor:'#E9F0F7',
+          primaryBorderColor:'#234E78',
+          primaryTextColor:'#16181D',
+          lineColor:'#9AA6B4',
+          actorBkg:'#E9F0F7',
+          actorBorder:'#234E78',
+          actorTextColor:'#16181D',
+          actorLineColor:'#C2CBD6',
+          signalColor:'#4A525E',
+          signalTextColor:'#2A2E35',
+          labelBoxBkgColor:'#EFE9F8',
+          labelBoxBorderColor:'#5B3E8E',
+          labelTextColor:'#3D2A63',
+          noteBkgColor:'#FBF1DD',
+          noteBorderColor:'#B5781F',
+          noteTextColor:'#5A431A',
+          activationBkgColor:'#DCE6F1',
+          sequenceNumberColor:'#FFFFFF'
+        }
+      });
+    }catch(e){ showFallback(); }
+  })();
+</script>
+</body>
+</html>
